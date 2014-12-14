@@ -229,7 +229,7 @@ func (b HBoxBlock) Render() string {
 	for _, block := range b.Content {
 		out += block.Render()
 	}
-	return out
+	return fmt.Sprintf(`<div class="monsti-block-hbox">%v</div>`, out)
 }
 
 // HTMLBlock is a block that contains raw HTML.
@@ -238,7 +238,7 @@ type HTMLBlock struct {
 }
 
 func (b HTMLBlock) Render() string {
-	return b.Value
+	return fmt.Sprintf(`<div class="monsti-block-html">%v</div>`, b.Value)
 }
 
 type CompositionField struct {
