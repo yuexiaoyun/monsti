@@ -19,6 +19,7 @@ package service
 import (
 	"fmt"
 	"html/template"
+	"log"
 	"path"
 	"strings"
 	"time"
@@ -212,6 +213,67 @@ func (t *DateTimeField) FromFormField(data util.NestedMap, field *NodeField) {
 	*t = DateTimeField{Time: time}
 }
 
+// Block is something that can be embedded into a CompositionField.
+type Block interface {
+	// Render returns the block's rendered HTML.
+	Render() string
+}
+
+// HBoxBlock is a horizontal block container.
+type HBoxBlock struct {
+	Content []Block
+}
+
+func (b HBoxBlock) Render() string {
+	var out string
+	for _, block := range b.Content {
+		out += block.Render()
+	}
+	return out
+}
+
+// HTMLBlock is a block that contains raw HTML.
+type HTMLBlock struct {
+	Value string
+}
+
+func (b HTMLBlock) Render() string {
+	return b.Value
+}
+
+type CompositionField struct {
+	Block Block
+}
+
+func (t *CompositionField) Init(m *MonstiClient, site string) error {
+	t.Block = HBoxBlock{Content: []Block{HTMLBlock{"<h1>Hello World Not Loaded!</h1>"}}}
+	return nil
+}
+
+func (t CompositionField) RenderHTML() interface{} {
+	return template.HTML(t.Block.Render())
+}
+
+func (t CompositionField) String() string {
+	return t.String()
+}
+
+func (t *CompositionField) Load(in interface{}) error {
+	log.Printf("CompositionField Load: %#v", in)
+	return nil
+}
+
+func (t CompositionField) Dump() interface{} {
+	return nil
+}
+
+func (t CompositionField) ToFormField(form *htmlwidgets.Form, data util.NestedMap,
+	field *NodeField, locale string) {
+}
+
+func (t *CompositionField) FromFormField(data util.NestedMap, field *NodeField) {
+}
+
 // TemplateOverwrite specifies a template that should be used instead
 // of another.
 type TemplateOverwrite struct {
@@ -255,6 +317,8 @@ func (n *Node) InitFields(m *MonstiClient, site string) error {
 			val = new(TextField)
 		case "HTMLArea":
 			val = new(HTMLField)
+		case "Composition":
+			val = new(CompositionField)
 		default:
 			panic(fmt.Sprintf("Unknown field type %q for node %q", field.Type, n.Path))
 		}
