@@ -13,3 +13,8 @@
 {{template "utils/date" (.Node.GetValue "foo.DateTime").Time}}
 {{template "utils/time" (.Node.GetValue "foo.DateTime").Time}}
 </p>
+
+<h2>Composition</h2>
+<p>
+{{(.Node.GetField "foo.Composition").RenderHTML}}
+</p>

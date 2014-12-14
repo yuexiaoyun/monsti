@@ -31,6 +31,14 @@
       },
       "Required": false,
       "Type": "Text"
+    },
+    {
+      "Id": "foo.Composition",
+      "Name": {
+        "en": "Composition"
+      },
+      "Required": false,
+      "Type": "Composition"
     }
   ],
   "Public": true,
@@ -45,7 +53,13 @@
     "foo": {
       "DateTime": "2014-12-31T22:55:00Z",
       "HTMLArea": "\u003cp\u003e\u003cstrong\u003eHTML\u003c/strong\u003e Area\u003c/p\u003e",
-      "Text": "Simple Text Field"
+      "Text": "Simple Text Field",
+      "Composition": {
+        "type": "hbox",
+        "content": [
+          {"type": "html", "value": "<h1>Hello World</h1>"}
+        ]
+      }
     }
   }
 }
