@@ -38,7 +38,7 @@ type Field interface {
 	// String returns a raw string representation of the field.
 	String() string
 	// Load loads the field data (also see Dump).
-	Load(interface{}) error
+	Load(func(interface{}) error) error
 	// Dump dumps the field data.
 	//
 	// The dumped value must be something that can be marshalled into
@@ -65,9 +65,8 @@ func (t TextField) RenderHTML() interface{} {
 	return t
 }
 
-func (t *TextField) Load(in interface{}) error {
-	*t = TextField(in.(string))
-	return nil
+func (t *TextField) Load(f func(interface{}) error) error {
+	return f(t)
 }
 
 func (t TextField) Dump() interface{} {
@@ -102,9 +101,8 @@ func (t HTMLField) RenderHTML() interface{} {
 	return template.HTML(t)
 }
 
-func (t *HTMLField) Load(in interface{}) error {
-	*t = HTMLField(in.(string))
-	return nil
+func (t *HTMLField) Load(f func(interface{}) error) error {
+	return f(t)
 }
 
 func (t HTMLField) Dump() interface{} {
@@ -138,9 +136,8 @@ func (t FileField) RenderHTML() interface{} {
 	return template.HTML(t)
 }
 
-func (t *FileField) Load(in interface{}) error {
-	*t = FileField(in.(string))
-	return nil
+func (t *FileField) Load(f func(interface{}) error) error {
+	return f(t)
 }
 
 func (t FileField) Dump() interface{} {
@@ -184,10 +181,10 @@ func (t DateTimeField) String() string {
 	return t.Time.String()
 }
 
-func (t *DateTimeField) Load(in interface{}) error {
-	date, ok := in.(string)
-	if !ok {
-		return fmt.Errorf("Data is not string")
+func (t *DateTimeField) Load(f func(interface{}) error) error {
+	var date string
+	if err := f(&date); err != nil {
+		return err
 	}
 	val, err := time.Parse(time.RFC3339, date)
 	if err != nil {
@@ -356,7 +353,7 @@ func (n *Node) InitFields(m *MonstiClient, site string) error {
 		case "Composition":
 			val = new(CompositionField)
 		default:
-			panic(fmt.Sprintf("Unknown field type %q for node %q", field.Type, n.Path))
+			return fmt.Errorf("Unknown field type %q for node %q", field.Type, n.Path)
 		}
 		err := val.Init(m, site)
 		if err != nil {
