@@ -217,6 +217,8 @@ func (t *DateTimeField) FromFormField(data util.NestedMap, field *NodeField) {
 type Block interface {
 	// Render returns the block's rendered HTML.
 	Render() string
+	// Load loads the block's data (also see Dump).
+	Load(func(interface{}) error) error
 }
 
 // HBoxBlock is a horizontal block container.
@@ -232,6 +234,13 @@ func (b HBoxBlock) Render() string {
 	return fmt.Sprintf(`<div class="monsti-block-hbox">%v</div>`, out)
 }
 
+func (b *HBoxBlock) Load(f func(interface{}) error) error {
+	var in []BlockJSON
+	err := f(&in)
+	b.Content = loadBlocks(in)
+	return err
+}
+
 // HTMLBlock is a block that contains raw HTML.
 type HTMLBlock struct {
 	Value string
@@ -241,12 +250,23 @@ func (b HTMLBlock) Render() string {
 	return fmt.Sprintf(`<div class="monsti-block-html">%v</div>`, b.Value)
 }
 
+func (b *HTMLBlock) Load(f func(interface{}) error) error {
+	return nil
+}
+
+type BlockJSON struct {
+	Type string
+	Data json.RawMessage
+}
+
 type CompositionField struct {
 	Block Block
 }
 
 func (t *CompositionField) Init(m *MonstiClient, site string) error {
-	t.Block = HBoxBlock{Content: []Block{HTMLBlock{"<h1>Hello World Not Loaded!</h1>"}}}
+	t.Block = &HBoxBlock{Content: []Block{
+		&HTMLBlock{"<p>First Block (Not Loaded! Just Fake)</p>"},
+		&HTMLBlock{"<p>Second Block (Not Loaded! Just Fake)</p>"}}}
 	return nil
 }
 
@@ -258,9 +278,25 @@ func (t CompositionField) String() string {
 	return t.String()
 }
 
-func (t *CompositionField) Load(in interface{}) error {
-	log.Printf("CompositionField Load: %#v", in)
-	return nil
+func (t *CompositionField) Load(f func(interface{}) error) error {
+	var block BlockJSON
+	f(&block)
+	switch block.Type {
+	case "html":
+		t.Block = new(HTMLBlock)
+	case "hbox":
+		t.Block = new(HBoxBlock)
+	default:
+		return fmt.Errorf("Unknown block type %v", block.Type)
+	}
+	var err error
+	if block.Data != nil {
+		f := func(in interface{}) error {
+			return json.Unmarshal(block.Data, in)
+		}
+		err = t.Block.Load(f)
+	}
+	return err
 }
 
 func (t CompositionField) Dump() interface{} {
