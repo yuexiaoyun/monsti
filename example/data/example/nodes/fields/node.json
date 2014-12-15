@@ -56,8 +56,9 @@
       "Text": "Simple Text Field",
       "Composition": {
         "type": "hbox",
-        "content": [
-          {"type": "html", "value": "<h1>Hello World</h1>"}
+        "data": [
+          {"type": "html", "data": "<p>First Block</p>"},
+          {"type": "html", "data": "<p>Second Block</p>"}
         ]
       }
     }
